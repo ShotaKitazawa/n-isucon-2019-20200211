@@ -7,6 +7,7 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
@@ -1581,6 +1582,7 @@ func iconPost(c web.C, w http.ResponseWriter, r *http.Request) {
 
 	img, err := ioutil.ReadAll(file)
 	encodedimg := base64.StdEncoding.EncodeToString([]byte(img))
+	log.Printf("base64:%s\n ", encodedimg)
 
 	query := "INSERT INTO icon (user_id, icon) VALUES ((?), (?));"
 	_, err = db.Exec(query, userID, encodedimg)
@@ -1589,6 +1591,18 @@ func iconPost(c web.C, w http.ResponseWriter, r *http.Request) {
 		panic("Failed to insert to items table.")
 		return
 	}
+
+	if err := os.MkdirAll(fmt.Sprintf("/home/isucon/app/public/users/%s", username), 0777); err != nil {
+		panic(err)
+	}
+
+	wfile, err := os.Create(fmt.Sprintf("/home/isucon/app/public/users/%s/icon", username))
+	if err != nil {
+		panic(err)
+	}
+	defer wfile.Close()
+	wfile.Write(img)
+
 	utils.SetStatus(w, 201)
 	return
 }
