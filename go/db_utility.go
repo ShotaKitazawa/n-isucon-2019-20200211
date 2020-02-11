@@ -54,6 +54,7 @@ func SelectUserByUsername(db *sql.DB, searchname string) (user *User, err error)
 	return user, err
 }
 
+/*
 // SelectUserByUserID searches the user from users table by user_id.
 func SelectUserByUserID(db *sql.DB, userID int) (user *User, err error) {
 	user = new(User)
@@ -80,6 +81,7 @@ func SelectUserByUserID(db *sql.DB, userID int) (user *User, err error) {
 
 	return user, err
 }
+*/
 
 // UsernameExists returns "true" if username is already in use.
 func UsernameExists(username string, db *sql.DB) bool {
@@ -120,7 +122,8 @@ func ItemExists(itemID string, db *sql.DB) bool {
 // SelectItemByID searches the item from items table by the item ID.
 func SelectItemByID(db *sql.DB, itemID string) (item *DetailedItem, err error) {
 	item = new(DetailedItem)
-	query := "SELECT id, user_id, title, body, created_at, updated_at, likes from items WHERE id=(?)"
+	query := "SELECT i.id, i.user_id, u.username, i.title, i.body, i.created_at, i.updated_at, i.likes from items AS i JOIN users AS u ON i.user_id = u.id WHERE i.id=(?)"
+
 	rows, err := db.Query(query, itemID)
 	if err != nil {
 		err := &DBUtilError{Msg: "DBQUERYERR", Code: DBQUERYERR}
@@ -133,7 +136,7 @@ func SelectItemByID(db *sql.DB, itemID string) (item *DetailedItem, err error) {
 		return item, err
 	}
 
-	err = rows.Scan(&item.ID, &item.userID, &item.Title, &item.Body, &item.CreatedAt, &item.UpdatedAt, &item.likes)
+	err = rows.Scan(&item.ID, &item.userID, &item.Username, &item.Title, &item.Body, &item.CreatedAt, &item.UpdatedAt, &item.likes)
 	if err != nil {
 		err := &DBUtilError{Msg: "DBSCANERR", Code: DBSCANERR}
 		return item, err
@@ -142,14 +145,6 @@ func SelectItemByID(db *sql.DB, itemID string) (item *DetailedItem, err error) {
 	if item.likes.Valid {
 		item.Likes = item.likes.String
 	}
-
-	var user *User
-	user, err = SelectUserByUserID(db, item.userID)
-	if err != nil {
-		panic(err)
-		return
-	}
-	item.Username = user.Username
 
 	return item, err
 }
