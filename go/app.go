@@ -533,7 +533,8 @@ func itemsGet(c web.C, w http.ResponseWriter, r *http.Request) {
 
 	} else {
 
-		query := "SELECT id, title, user_id, created_at, likes from items"
+		query := "SELECT i.id, i.title, u.username, i.created_at, i.likes from items AS i JOIN users AS u ON i.user_id = u.id ORDER BY i.created_at DESC"
+
 		rows, err := db.Query(query)
 		if err != nil {
 			utils.SetStatus(w, 500)
@@ -542,19 +543,13 @@ func itemsGet(c web.C, w http.ResponseWriter, r *http.Request) {
 		}
 
 		for rows.Next() {
-			var userID int
 			result := Item{}
-			err := rows.Scan(&result.ID, &result.Title, &userID, &result.CreatedAt, &result.likes)
+			err := rows.Scan(&result.ID, &result.Title, &result.Username, &result.CreatedAt, &result.likes)
 			if err != nil {
 				utils.SetStatus(w, 500)
 				panic("Unable to scan from the result.")
 				return
 			}
-			user, err := SelectUserByUserID(db, userID)
-			if err != nil {
-				panic("Unexpected err.")
-			}
-			result.Username = user.Username
 
 			if result.likes.Valid == false {
 				result.likeCount = 0
