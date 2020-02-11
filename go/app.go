@@ -28,6 +28,8 @@ import (
 )
 
 var (
+	db *sql.DB
+
 	dbDriver   = "mysql"
 	dataSource string
 	store      *sessions.CookieStore
@@ -74,12 +76,7 @@ func signin(c web.C, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	db, err := sql.Open(dbDriver, dataSource)
-	defer db.Close()
-	if err != nil {
-		panic("Unable to connect the DB.")
-	}
-	user, err = SelectUserByUsername(db, username)
+	user, err := SelectUserByUsername(db, username)
 
 	if err != nil {
 		errCode, _ := strconv.Atoi(fmt.Sprintf("%s", err))
@@ -154,12 +151,7 @@ func usersGet(c web.C, w http.ResponseWriter, r *http.Request) {
 	var user *User
 	searchName := c.URLParams["username"]
 
-	db, err := sql.Open(dbDriver, dataSource)
-	defer db.Close()
-	if err != nil {
-		panic("Unable to connect the DB.")
-	}
-	user, err = SelectUserByUsername(db, searchName)
+	user, err := SelectUserByUsername(db, searchName)
 
 	if err != nil {
 		errCode, _ := strconv.Atoi(fmt.Sprintf("%s", err))
@@ -228,12 +220,6 @@ func usersPost(c web.C, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	db, err := sql.Open(dbDriver, dataSource)
-	defer db.Close()
-	if err != nil {
-		panic("Unable to connect the DB.")
-	}
-
 	// if username exists
 
 	if UsernameExists(newusername, db) {
@@ -248,7 +234,7 @@ func usersPost(c web.C, w http.ResponseWriter, r *http.Request) {
 	const layout = "2006-01-02 15:04:05"
 	t := time.Now()
 	query := "INSERT INTO users (username, password_hash, salt, created_at, updated_at) VALUES ((?), (?), (?), (?), (?));"
-	_, err = db.Exec(query, newusername, passwordHash, salt, t.Format(layout), t.Format(layout))
+	_, err := db.Exec(query, newusername, passwordHash, salt, t.Format(layout), t.Format(layout))
 
 	if err != nil {
 		panic("Unable to insert to the users table.")
@@ -328,12 +314,6 @@ func usersPatch(c web.C, w http.ResponseWriter, r *http.Request) {
 	}
 
 	// search target user
-	db, err := sql.Open(dbDriver, dataSource)
-	defer db.Close()
-	if err != nil {
-		panic("Unable to connect the DB.")
-	}
-
 	user, err = SelectUserByUsername(db, targetName)
 
 	if err != nil {
@@ -440,12 +420,6 @@ func usersDelete(c web.C, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	db, err := sql.Open(dbDriver, dataSource)
-	defer db.Close()
-	if err != nil {
-		panic("Unable to connect the DB.")
-	}
-
 	if UsernameExists(username, db) == false {
 		utils.SetStatus(w, 404)
 		return
@@ -503,13 +477,6 @@ func itemsGet(c web.C, w http.ResponseWriter, r *http.Request) {
 			sortLike = true
 		}
 	}
-
-	db, err := sql.Open("mysql", dataSource)
-	if err != nil {
-		panic("Unable to connect the DB.")
-	}
-
-	defer db.Close()
 
 	if sortLike == false {
 
@@ -580,7 +547,7 @@ func itemsGet(c web.C, w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	if items.Items == nil {
-		_, err = fmt.Fprintf(w, "{\"items\": [], \"count\": 0}")
+		fmt.Fprintf(w, "{\"items\": [], \"count\": 0}")
 		return
 	}
 
@@ -616,13 +583,7 @@ func itemsGetByID(c web.C, w http.ResponseWriter, r *http.Request) {
 	var item *DetailedItem
 	itemID := c.URLParams["item_id"]
 
-	db, err := sql.Open("mysql", dataSource)
-	if err != nil {
-		panic("Unable to connect the DB.")
-	}
-	defer db.Close()
-
-	item, err = SelectItemByID(db, itemID)
+	item, err := SelectItemByID(db, itemID)
 	if err != nil {
 		errCode, _ := strconv.Atoi(fmt.Sprintf("%s", err))
 		switch errCode {
@@ -699,13 +660,6 @@ func itemsPost(c web.C, w http.ResponseWriter, r *http.Request) {
 	if session.Values["username"] == nil {
 		utils.SetStatus(w, 401)
 		return
-	}
-
-	db, err := sql.Open(dbDriver, dataSource)
-	defer db.Close()
-	if err != nil {
-		utils.SetStatus(w, 500)
-		panic("Unable to connect the DB.")
 	}
 
 	// get user ID
@@ -788,12 +742,6 @@ func itemsDelete(c web.C, w http.ResponseWriter, r *http.Request) {
 	if session.Values["username"] == nil {
 		utils.SetStatus(w, 401)
 		return
-	}
-
-	db, err := sql.Open(dbDriver, dataSource)
-	defer db.Close()
-	if err != nil {
-		panic("Unable to connect the DB.")
 	}
 
 	var item *DetailedItem
@@ -879,13 +827,6 @@ func itemsPatch(c web.C, w http.ResponseWriter, r *http.Request) {
 	if err != nil || session.Values["username"] == nil {
 		utils.SetStatus(w, 401)
 		return
-	}
-
-	db, err := sql.Open(dbDriver, dataSource)
-	defer db.Close()
-	if err != nil {
-		utils.SetStatus(w, 500)
-		panic("Unable to connect the DB.")
 	}
 
 	// get user ID
@@ -975,19 +916,12 @@ func commentsGet(c web.C, w http.ResponseWriter, r *http.Request) {
 	var comments *Comments
 	itemID := c.URLParams["item_id"]
 
-	db, err := sql.Open(dbDriver, dataSource)
-	defer db.Close()
-	if err != nil {
-		utils.SetStatus(w, 500)
-		panic("Unable to connect the DB.")
-	}
-
 	if ItemExists(itemID, db) == false {
 		utils.SetStatus(w, 404)
 		return
 	}
 
-	comments, err = SelectCommentsByID(db, itemID)
+	comments, err := SelectCommentsByID(db, itemID)
 	if err != nil {
 		errCode, _ := strconv.Atoi(fmt.Sprintf("%s", err))
 		switch errCode {
@@ -1070,13 +1004,6 @@ func commentsPost(c web.C, w http.ResponseWriter, r *http.Request) {
 	if session.Values["username"] == nil {
 		utils.SetStatus(w, 401)
 		return
-	}
-
-	db, err := sql.Open(dbDriver, dataSource)
-	defer db.Close()
-	if err != nil {
-		utils.SetStatus(w, 500)
-		panic("Unable to connect the DB.")
 	}
 
 	if ItemExists(itemID, db) == false {
@@ -1196,13 +1123,6 @@ func commentsDelete(c web.C, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	db, err := sql.Open(dbDriver, dataSource)
-	defer db.Close()
-	if err != nil {
-		utils.SetStatus(w, 500)
-		panic("Unable to connect the DB.")
-	}
-
 	if ItemExists(itemID, db) == false {
 		utils.SetStatus(w, 404)
 		return
@@ -1297,12 +1217,6 @@ func likeGet(c web.C, w http.ResponseWriter, r *http.Request) {
 	var like Likes
 	itemID := c.URLParams["item_id"]
 
-	db, err := sql.Open("mysql", dataSource)
-	if err != nil {
-		panic("Unable to connect the DB.")
-	}
-	defer db.Close()
-
 	query := "SELECT likes from items WHERE id=(?)"
 	rows, err := db.Query(query, itemID)
 	if err != nil {
@@ -1360,12 +1274,6 @@ func likePost(c web.C, w http.ResponseWriter, r *http.Request) {
 		utils.SetStatus(w, 401)
 		return
 	}
-
-	db, err := sql.Open("mysql", dataSource)
-	if err != nil {
-		panic("Unable to connect the DB.")
-	}
-	defer db.Close()
 
 	// get user ID
 
@@ -1485,12 +1393,6 @@ func likeDelete(c web.C, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	db, err := sql.Open("mysql", dataSource)
-	if err != nil {
-		panic("Unable to connect the DB.")
-	}
-	defer db.Close()
-
 	// get user ID
 
 	username, _ := session.Values["username"].(string)
@@ -1576,12 +1478,6 @@ func likeDelete(c web.C, w http.ResponseWriter, r *http.Request) {
 
 func iconGet(c web.C, w http.ResponseWriter, r *http.Request) {
 	username := c.URLParams["username"]
-
-	db, err := sql.Open("mysql", dataSource)
-	if err != nil {
-		panic("Unable to connect the DB.")
-	}
-	defer db.Close()
 
 	// get user ID
 	user, err := SelectUserByUsername(db, username)
@@ -1675,11 +1571,6 @@ func iconPost(c web.C, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	db, err := sql.Open("mysql", dataSource)
-	if err != nil {
-		panic("Unable to connect the DB.")
-	}
-	defer db.Close()
 	// get user ID
 	user, err := SelectUserByUsername(db, username)
 	if err != nil {
@@ -1743,6 +1634,12 @@ func main() {
 	dbuser := os.Getenv("MYSQL_USER")
 	dbpass := os.Getenv("MYSQL_PASSWORD")
 	dataSource = fmt.Sprintf("%s:%s@tcp(%s:3306)/%s?parseTime=true&interpolateParams=true", dbuser, dbpass, dbhost, dbname)
+
+	var err error
+	db, err = sql.Open("mysql", dataSource)
+	if err != nil {
+		panic("Unable to connect the DB.")
+	}
 
 	const location = "./public"
 	absLocation, _ := filepath.Abs(location)
