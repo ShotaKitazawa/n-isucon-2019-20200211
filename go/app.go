@@ -513,9 +513,9 @@ func itemsGet(c web.C, w http.ResponseWriter, r *http.Request) {
 
 	if sortLike == false {
 
-		query := "SELECT i.id, i.title, u.username, i.created_at from items AS i JOIN users AS u ON i.user_id = u.id ORDER BY i.created_at DESC"
+		query := "SELECT i.id, i.title, u.username, i.created_at from items AS i JOIN users AS u ON i.user_id = u.id ORDER BY i.created_at DESC LIMIT ? OFFSET ?"
 
-		rows, err := db.Query(query)
+		rows, err := db.Query(query, ItemLimit, offset)
 		if err != nil {
 			utils.SetStatus(w, 500)
 			panic("Unable to get the query results.")
@@ -564,20 +564,20 @@ func itemsGet(c web.C, w http.ResponseWriter, r *http.Request) {
 			return items.Items[i].likeCount > items.Items[j].likeCount
 		})
 
+		start := offset
+		end := offset + ItemLimit
+
+		if len(items.Items) > end {
+			items.Items = items.Items[start:end]
+		} else if len(items.Items) > start {
+			items.Items = items.Items[start:len(items.Items)]
+		} else {
+			items.Items = []Item{}
+		}
+
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-
-	start := offset
-	end := offset + ItemLimit
-
-	if len(items.Items) > end {
-		items.Items = items.Items[start:end]
-	} else if len(items.Items) > start {
-		items.Items = items.Items[start:len(items.Items)]
-	} else {
-		items.Items = []Item{}
-	}
 
 	if items.Items == nil {
 		_, err = fmt.Fprintf(w, "{\"items\": [], \"count\": 0}")
