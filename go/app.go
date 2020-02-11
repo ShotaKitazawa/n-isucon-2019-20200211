@@ -7,7 +7,6 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
@@ -93,8 +92,6 @@ func signin(c web.C, w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	fmt.Printf("salt:%s hash:%s", user.salt, user.passwordHash)
-
 	if utils.GetPasswordHash(user.salt, password) != user.passwordHash {
 		utils.SetStatus(w, 401)
 		return
@@ -138,8 +135,7 @@ func signout(c web.C, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	username, _ := session.Values["username"].(string)
-	fmt.Printf("%s\n", username)
+	//username, _ := session.Values["username"].(string)
 
 	//delete(session.Values, "username")
 	session.Options = &sessions.Options{MaxAge: -1, Path: "/"}
@@ -302,10 +298,6 @@ func usersPatch(c web.C, w http.ResponseWriter, r *http.Request) {
 	newpasswordHash := ""
 	newsalt := ""
 
-	fmt.Printf("target: %s\n", targetName)
-	fmt.Printf("newusername: %s\n", newusername)
-	fmt.Printf("newpass: %s\n", newpassword)
-
 	// When there is no required value
 	if utf8.RuneCountInString(newusername) <= 0 &&
 		utf8.RuneCountInString(newpassword) <= 0 {
@@ -353,11 +345,6 @@ func usersPatch(c web.C, w http.ResponseWriter, r *http.Request) {
 		newsalt = utils.GetSalt()
 		newpasswordHash = utils.GetPasswordHash(newsalt, newpassword)
 	}
-	fmt.Printf("-----------------------\n")
-	fmt.Printf("newsalt: %s\n", newsalt)
-	fmt.Printf("newpasswordHash: %s\n", newpasswordHash)
-	fmt.Printf("newusername: %s\n", newusername)
-	fmt.Printf("newpass: %s\n", newpassword)
 
 	const layout = "2006-01-02 15:04:05"
 	t := time.Now()
@@ -1077,7 +1064,6 @@ func commentsPost(c web.C, w http.ResponseWriter, r *http.Request) {
 			}
 			jsonByte, _ := json.Marshal(x)
 			jsonStr := string(jsonByte)
-			fmt.Printf("string(jsonBytes): %s\n", jsonStr)
 			query := fmt.Sprintf("UPDATE comments set comment_%03d=(?) WHERE id=(?)", x.CommentID)
 			_, err = db.Exec(query, jsonStr, itemID)
 			if err != nil {
@@ -1173,12 +1159,9 @@ func commentsDelete(c web.C, w http.ResponseWriter, r *http.Request) {
 	// search target column
 	deleted := false
 	for _, x := range comments.Comments {
-		log.Println("comments:", x)
 		if x.CommentID != commentID {
 			continue
 		}
-		log.Println("x.userID", x.userID)
-		log.Println("userID", userID)
 		if x.userID != userID {
 			utils.SetStatus(w, 403)
 			return
@@ -1261,7 +1244,6 @@ func likeGet(c web.C, w http.ResponseWriter, r *http.Request) {
 func likePost(c web.C, w http.ResponseWriter, r *http.Request) {
 
 	var like Likes
-	var user *User
 
 	itemID := c.URLParams["item_id"]
 	session, err := store.Get(r, "session")
@@ -1278,7 +1260,7 @@ func likePost(c web.C, w http.ResponseWriter, r *http.Request) {
 	// get user ID
 
 	username, _ := session.Values["username"].(string)
-	user, err = SelectUserByUsername(db, username)
+	_, err = SelectUserByUsername(db, username)
 	if err != nil {
 		errCode, _ := strconv.Atoi(fmt.Sprintf("%s", err))
 		switch errCode {
@@ -1314,14 +1296,9 @@ func likePost(c web.C, w http.ResponseWriter, r *http.Request) {
 		like.Likes = ""
 		likeStrs := strings.Split(like.likes.String, ",")
 
-		fmt.Printf("like.likes.String:%v\n", like.likes.String)
-		fmt.Printf("likeStrs:%v\n", likeStrs)
-		fmt.Printf("user.ID:%v\n", user.ID)
-
 		// search
 		var flag bool
 		for _, s := range likeStrs {
-			fmt.Println(s)
 
 			if s == username {
 				like.Likes = like.likes.String
@@ -1345,8 +1322,6 @@ func likePost(c web.C, w http.ResponseWriter, r *http.Request) {
 			like.LikeCount = len(likeStrs)
 		}
 	}
-
-	fmt.Printf("final likes: %s\n", like.Likes)
 
 	query = "UPDATE items set likes=(?) WHERE id=(?)"
 	_, err = db.Exec(query, like.Likes, itemID)
@@ -1461,7 +1436,6 @@ func likeDelete(c web.C, w http.ResponseWriter, r *http.Request) {
 		result = like.Likes
 	}
 
-	fmt.Printf("final: %v\n", result)
 	query = "UPDATE items set likes=(?) WHERE id=(?)"
 	_, err = db.Exec(query, result, itemID)
 
@@ -1497,6 +1471,7 @@ func iconGet(c web.C, w http.ResponseWriter, r *http.Request) {
 	}
 	userID := user.ID
 	iconExists := true
+
 	base64txt, err := SelectIconByUserID(db, userID)
 	if err != nil {
 		errCode, _ := strconv.Atoi(fmt.Sprintf("%s", err))
@@ -1514,11 +1489,7 @@ func iconGet(c web.C, w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	//var data map[string]interface{}
-	w.Header().Set("Content-Type", "image/png")
-
 	if iconExists {
-		//log.Println("base64txt:", base64txt)
 		decodedimg, err := base64.StdEncoding.DecodeString(base64txt)
 		if err != nil {
 			panic("Decode failed.")
@@ -1537,6 +1508,7 @@ func iconGet(c web.C, w http.ResponseWriter, r *http.Request) {
 		w.Write(img)
 
 	}
+	w.Header().Set("Content-Type", "image/png")
 
 	return
 }
@@ -1587,7 +1559,7 @@ func iconPost(c web.C, w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	userID := user.ID
-	base64txt, err := SelectIconByUserID(db, userID)
+	_, err = SelectIconByUserID(db, userID)
 	if err != nil {
 		errCode, _ := strconv.Atoi(fmt.Sprintf("%s", err))
 		switch errCode {
@@ -1602,7 +1574,6 @@ func iconPost(c web.C, w http.ResponseWriter, r *http.Request) {
 			panic(err)
 		}
 	} else {
-		log.Println("base64txt:", base64txt)
 		// Icon exists.
 		utils.SetStatus(w, 409)
 		return
@@ -1610,7 +1581,6 @@ func iconPost(c web.C, w http.ResponseWriter, r *http.Request) {
 
 	img, err := ioutil.ReadAll(file)
 	encodedimg := base64.StdEncoding.EncodeToString([]byte(img))
-	log.Printf("base64:%s\n ", encodedimg)
 
 	query := "INSERT INTO icon (user_id, icon) VALUES ((?), (?));"
 	_, err = db.Exec(query, userID, encodedimg)
