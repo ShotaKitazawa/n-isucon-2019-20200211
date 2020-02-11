@@ -18,7 +18,7 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"./utils"
+	"github.com/ShotaKitazawa/n-isucon-2019-20200211/utils"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
