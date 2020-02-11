@@ -486,8 +486,6 @@ func itemsGet(c web.C, w http.ResponseWriter, r *http.Request) {
 	var items Items
 
 	queryStr := r.URL.Query()
-	fmt.Printf("Quey str: %v\n", queryStr)
-	fmt.Printf("OFFSET: %d\n", offset)
 
 	if queryStr["page"] != nil {
 		page := queryStr.Get("page")
@@ -513,11 +511,10 @@ func itemsGet(c web.C, w http.ResponseWriter, r *http.Request) {
 
 	defer db.Close()
 
-	fmt.Printf("limit: %v\n", ItemLimit)
-
 	if sortLike == false {
 
-		query := "SELECT id, title, user_id, created_at from items ORDER BY created_at DESC"
+		query := "SELECT i.id, i.title, u.username, i.created_at from items AS i JOIN users AS u ON i.user_id = u.id ORDER BY i.created_at DESC"
+
 		rows, err := db.Query(query)
 		if err != nil {
 			utils.SetStatus(w, 500)
@@ -526,18 +523,11 @@ func itemsGet(c web.C, w http.ResponseWriter, r *http.Request) {
 		}
 
 		for rows.Next() {
-			var userID int
 			result := Item{}
-			err := rows.Scan(&result.ID, &result.Title, &userID, &result.CreatedAt)
+			err := rows.Scan(&result.ID, &result.Title, &result.Username, &result.CreatedAt)
 			if err != nil {
 				panic(err)
 			}
-			user, err := SelectUserByUserID(db, userID)
-			if err != nil {
-				panic("Unexpected err.")
-			}
-			result.Username = user.Username
-			fmt.Println("res: %v", result)
 			items.Items = append(items.Items, result)
 		}
 
@@ -838,8 +828,6 @@ func itemsDelete(c web.C, w http.ResponseWriter, r *http.Request) {
 		utils.SetStatus(w, 403)
 		return
 	}
-
-	fmt.Println(item.ID)
 
 	query := "DELETE FROM items WHERE id=(?)"
 	res, err := db.Exec(query, itemID)
