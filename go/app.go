@@ -110,7 +110,8 @@ func signin(c web.C, w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		utils.SetStatus(w, 500)
-		panic("Failed to convert to JSON.")
+		//panic("Failed to convert to JSON.")
+		panic(err)
 		return
 	}
 
@@ -118,7 +119,8 @@ func signin(c web.C, w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		utils.SetStatus(w, 500)
-		panic("Unable to write responses.")
+		//panic("Unable to write responses.")
+		panic(err)
 		return
 	}
 }
@@ -171,7 +173,8 @@ func usersGet(c web.C, w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		utils.SetStatus(w, 500)
-		panic("Failed to convert to JSON.")
+		//panic("Failed to convert to JSON.")
+		panic(err)
 		return
 	}
 
@@ -179,7 +182,8 @@ func usersGet(c web.C, w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		utils.SetStatus(w, 500)
-		panic("Unable to write responses.")
+		//panic("Unable to write responses.")
+		panic(err)
 		return
 	}
 
@@ -233,7 +237,8 @@ func usersPost(c web.C, w http.ResponseWriter, r *http.Request) {
 	_, err := db.Exec(query, newusername, passwordHash, salt, t.Format(layout), t.Format(layout))
 
 	if err != nil {
-		panic("Unable to insert to the users table.")
+		//panic("Unable to insert to the users table.")
+		panic(err)
 		return
 	}
 
@@ -261,7 +266,8 @@ func usersPost(c web.C, w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		utils.SetStatus(w, 500)
-		panic("Failed to convert to JSON.")
+		//panic("Failed to convert to JSON.")
+		panic(err)
 		return
 	}
 
@@ -270,7 +276,8 @@ func usersPost(c web.C, w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		utils.SetStatus(w, 500)
-		panic("Unable to write responses.")
+		//panic("Unable to write responses.")
+		panic(err)
 		return
 	}
 
@@ -353,7 +360,8 @@ func usersPatch(c web.C, w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		utils.SetStatus(w, 500)
-		panic("Unable to update the users table.")
+		//panic("Unable to update the users table.")
+		panic(err)
 		return
 	}
 
@@ -381,7 +389,8 @@ func usersPatch(c web.C, w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		utils.SetStatus(w, 500)
-		panic("Failed to convert to JSON.")
+		//panic("Failed to convert to JSON.")
+		panic(err)
 		return
 	}
 
@@ -389,7 +398,8 @@ func usersPatch(c web.C, w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		utils.SetStatus(w, 500)
-		panic("Unable to write responses.")
+		//panic("Unable to write responses.")
+		panic(err)
 		return
 	}
 
@@ -423,7 +433,8 @@ func usersDelete(c web.C, w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		utils.SetStatus(w, 500)
-		panic("Unable to delete from the users table.")
+		//panic("Unable to delete from the users table.")
+		panic(err)
 		return
 	}
 
@@ -472,7 +483,8 @@ func itemsGet(c web.C, w http.ResponseWriter, r *http.Request) {
 		rows, err := db.Query(query, ItemLimit, offset)
 		if err != nil {
 			utils.SetStatus(w, 500)
-			panic("Unable to get the query results.")
+			//panic("Unable to get the query results.")
+			panic(err)
 			return
 		}
 
@@ -492,7 +504,8 @@ func itemsGet(c web.C, w http.ResponseWriter, r *http.Request) {
 		rows, err := db.Query(query)
 		if err != nil {
 			utils.SetStatus(w, 500)
-			panic("Unable to get the query results.")
+			//panic("Unable to get the query results.")
+			panic(err)
 			return
 		}
 
@@ -501,7 +514,8 @@ func itemsGet(c web.C, w http.ResponseWriter, r *http.Request) {
 			err := rows.Scan(&result.ID, &result.Title, &result.Username, &result.CreatedAt, &result.likes)
 			if err != nil {
 				utils.SetStatus(w, 500)
-				panic("Unable to scan from the result.")
+				//panic("Unable to scan from the result.")
+				panic(err)
 				return
 			}
 
@@ -552,7 +566,8 @@ func itemsGet(c web.C, w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		utils.SetStatus(w, 500)
-		panic("Failed to convert to JSON.")
+		//panic("Failed to convert to JSON.")
+		panic(err)
 		return
 	}
 
@@ -560,7 +575,8 @@ func itemsGet(c web.C, w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		utils.SetStatus(w, 500)
-		panic("Unable to write responses.")
+		//panic("Unable to write responses.")
+		panic(err)
 		return
 	}
 	return
@@ -592,7 +608,8 @@ func itemsGetByID(c web.C, w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		utils.SetStatus(w, 500)
-		panic("Failed to convert to JSON.")
+		//panic("Failed to convert to JSON.")
+		panic(err)
 		return
 	}
 
@@ -600,7 +617,8 @@ func itemsGetByID(c web.C, w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		utils.SetStatus(w, 500)
-		panic("Unable to write responses.")
+		//panic("Unable to write responses.")
+		panic(err)
 		return
 	}
 	return
@@ -677,7 +695,8 @@ func itemsPost(c web.C, w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		utils.SetStatus(w, 500)
-		panic("Failed to insert to items table.")
+		//panic("Failed to insert to items table.")
+		panic(err)
 		return
 	}
 
@@ -695,7 +714,8 @@ func itemsPost(c web.C, w http.ResponseWriter, r *http.Request) {
 	err = rows.Scan(&item.ID, &item.userID, &item.Title, &item.Body, &item.CreatedAt, &item.UpdatedAt, &item.likes)
 	if err != nil {
 		utils.SetStatus(w, 500)
-		panic("Unable to scan from the result.")
+		//panic("Unable to scan from the result.")
+		panic(err)
 		return
 	}
 
@@ -711,7 +731,8 @@ func itemsPost(c web.C, w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		utils.SetStatus(w, 500)
-		panic("Failed to convert to JSON.")
+		//panic("Failed to convert to JSON.")
+		panic(err)
 		return
 	}
 
@@ -760,7 +781,8 @@ func itemsDelete(c web.C, w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		utils.SetStatus(w, 500)
-		panic("Unable to delete item.")
+		//panic("Unable to delete item.")
+		panic(err)
 		return
 	}
 
@@ -874,7 +896,8 @@ func itemsPatch(c web.C, w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		utils.SetStatus(w, 500)
-		panic("Failed to insert to items table.")
+		//panic("Failed to insert to items table.")
+		panic(err)
 		return
 	}
 
@@ -884,7 +907,8 @@ func itemsPatch(c web.C, w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		utils.SetStatus(w, 500)
-		panic("Failed to convert to JSON.")
+		//panic("Failed to convert to JSON.")
+		panic(err)
 		return
 	}
 
@@ -892,7 +916,8 @@ func itemsPatch(c web.C, w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		utils.SetStatus(w, 500)
-		panic("Unable to write responses.")
+		//panic("Unable to write responses.")
+		panic(err)
 		return
 	}
 	return
@@ -924,7 +949,8 @@ func commentsGet(c web.C, w http.ResponseWriter, r *http.Request) {
 
 			if err != nil {
 				utils.SetStatus(w, 500)
-				panic("Failed to convert to JSON.")
+				//panic("Failed to convert to JSON.")
+				panic(err)
 				return
 			}
 
@@ -948,7 +974,8 @@ func commentsGet(c web.C, w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		utils.SetStatus(w, 500)
-		panic("Failed to convert to JSON.")
+		//panic("Failed to convert to JSON.")
+		panic(err)
 		return
 	}
 
@@ -956,7 +983,8 @@ func commentsGet(c web.C, w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		utils.SetStatus(w, 500)
-		panic("Unable to write responses.")
+		//panic("Unable to write responses.")
+		panic(err)
 		return
 	}
 	return
@@ -1078,7 +1106,8 @@ func commentsPost(c web.C, w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		utils.SetStatus(w, 500)
-		panic("Failed to convert to JSON.")
+		//panic("Failed to convert to JSON.")
+		panic(err)
 		return
 	}
 
@@ -1086,7 +1115,8 @@ func commentsPost(c web.C, w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		utils.SetStatus(w, 500)
-		panic("Unable to write responses.")
+		//panic("Unable to write responses.")
+		panic(err)
 		return
 	}
 	return
@@ -1190,7 +1220,8 @@ func commentsDelete(c web.C, w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		utils.SetStatus(w, 500)
-		panic("Unable to write responses.")
+		//panic("Unable to write responses.")
+		panic(err)
 		return
 	}
 	return
@@ -1203,7 +1234,8 @@ func likeGet(c web.C, w http.ResponseWriter, r *http.Request) {
 	query := "SELECT likes from items WHERE id=(?)"
 	rows, err := db.Query(query, itemID)
 	if err != nil {
-		panic("Unable to get the query results.")
+		//panic("Unable to get the query results.")
+		panic(err)
 		return
 	}
 	defer rows.Close()
@@ -1226,7 +1258,8 @@ func likeGet(c web.C, w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		utils.SetStatus(w, 500)
-		panic("Failed to convert to JSON.")
+		//panic("Failed to convert to JSON.")
+		panic(err)
 		return
 	}
 
@@ -1234,7 +1267,8 @@ func likeGet(c web.C, w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		utils.SetStatus(w, 500)
-		panic("Unable to write responses.")
+		//panic("Unable to write responses.")
+		panic(err)
 		return
 	}
 	return
@@ -1279,7 +1313,8 @@ func likePost(c web.C, w http.ResponseWriter, r *http.Request) {
 	query := "SELECT likes from items WHERE id=(?)"
 	rows, err := db.Query(query, itemID)
 	if err != nil {
-		panic("Unable to get the query results.")
+		//panic("Unable to get the query results.")
+		panic(err)
 		return
 	}
 	defer rows.Close()
@@ -1328,7 +1363,8 @@ func likePost(c web.C, w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		utils.SetStatus(w, 500)
-		panic("Unable to update likes.")
+		//panic("Unable to update likes.")
+		panic(err)
 		return
 	}
 
@@ -1336,13 +1372,15 @@ func likePost(c web.C, w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		utils.SetStatus(w, 500)
-		panic("Failed to convert to JSON.")
+		//panic("Failed to convert to JSON.")
+		panic(err)
 		return
 	}
 
 	if err != nil {
 		utils.SetStatus(w, 500)
-		panic("Unable to write responses.")
+		//panic("Unable to write responses.")
+		panic(err)
 		return
 	}
 
@@ -1389,7 +1427,8 @@ func likeDelete(c web.C, w http.ResponseWriter, r *http.Request) {
 	query := "SELECT likes from items WHERE id=(?)"
 	rows, err := db.Query(query, itemID)
 	if err != nil {
-		panic("Unable to get the query results.")
+		//panic("Unable to get the query results.")
+		panic(err)
 		return
 	}
 	defer rows.Close()
@@ -1441,7 +1480,8 @@ func likeDelete(c web.C, w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		utils.SetStatus(w, 500)
-		panic("Unable to update likes.")
+		//panic("Unable to update likes.")
+		panic(err)
 		return
 	}
 
@@ -1492,7 +1532,8 @@ func iconGet(c web.C, w http.ResponseWriter, r *http.Request) {
 	if iconExists {
 		decodedimg, err := base64.StdEncoding.DecodeString(base64txt)
 		if err != nil {
-			panic("Decode failed.")
+			//panic("Decode failed.")
+			panic(err)
 		}
 
 		w.Header().Set("Content-Length", strconv.Itoa(len(decodedimg)))
@@ -1587,7 +1628,8 @@ func iconPost(c web.C, w http.ResponseWriter, r *http.Request) {
 	_, err = db.Exec(query, userID, encodedimg)
 	if err != nil {
 		utils.SetStatus(w, 500)
-		panic("Failed to insert to items table.")
+		//panic("Failed to insert to items table.")
+		panic(err)
 		return
 	}
 
@@ -1621,7 +1663,8 @@ func main() {
 	var err error
 	db, err = sql.Open("mysql", dataSource)
 	if err != nil {
-		panic("Unable to connect the DB.")
+		//panic("Unable to connect the DB.")
+		panic(err)
 	}
 
 	const location = "./public"
