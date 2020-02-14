@@ -7,7 +7,6 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
@@ -1582,7 +1581,7 @@ func iconPost(c web.C, w http.ResponseWriter, r *http.Request) {
 
 	img, err := ioutil.ReadAll(file)
 	encodedimg := base64.StdEncoding.EncodeToString([]byte(img))
-	log.Printf("base64:%s\n ", encodedimg)
+	//log.Printf("base64:%s\n ", encodedimg)
 
 	query := "INSERT INTO icon (user_id, icon) VALUES ((?), (?));"
 	_, err = db.Exec(query, userID, encodedimg)
