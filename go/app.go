@@ -12,7 +12,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -26,13 +25,15 @@ import (
 	"github.com/zenazn/goji/web"
 )
 
+const (
+	dbDriver = "mysql"
+)
+
 var (
 	db *sql.DB
 
-	dbDriver   = "mysql"
-	dataSource string
-	store      *sessions.CookieStore
-	users      map[string]string
+	store *sessions.CookieStore
+	users map[string]string
 )
 
 func initialize(c web.C, w http.ResponseWriter, r *http.Request) {
@@ -40,8 +41,6 @@ func initialize(c web.C, w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic("DB init failed.")
 	}
-
-	return
 }
 
 func signin(c web.C, w http.ResponseWriter, r *http.Request) {
@@ -476,73 +475,32 @@ func itemsGet(c web.C, w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	var query string
 	if sortLike == false {
 
-		query := "SELECT i.id, i.title, u.username, i.created_at from items AS i JOIN users AS u ON i.user_id = u.id ORDER BY i.created_at DESC LIMIT ? OFFSET ?"
-
-		rows, err := db.Query(query, ItemLimit, offset)
-		if err != nil {
-			utils.SetStatus(w, 500)
-			//panic("Unable to get the query results.")
-			panic(err)
-			return
-		}
-
-		for rows.Next() {
-			result := Item{}
-			err := rows.Scan(&result.ID, &result.Title, &result.Username, &result.CreatedAt)
-			if err != nil {
-				panic(err)
-			}
-			items.Items = append(items.Items, result)
-		}
+		query = "SELECT i.id, i.title, u.username, i.created_at from items_new AS i JOIN users AS u ON i.user_id = u.id ORDER BY i.created_at DESC LIMIT ? OFFSET ?"
 
 	} else {
 
-		query := "SELECT i.id, i.title, u.username, i.created_at, i.likes from items AS i JOIN users AS u ON i.user_id = u.id ORDER BY i.created_at DESC"
+		//query := "SELECT i.id, i.title, u.username, i.created_at, i.likes from items_new AS i JOIN users AS u ON i.user_id = u.id ORDER BY i.created_at DESC"
+		query = "SELECT i.id, i.title, u.username, i.created_at from items_new AS i JOIN users AS u ON i.user_id = u.id ORDER BY i.num_of_likes DESC, i.created_at DESC LIMIT ? OFFSET ?"
 
-		rows, err := db.Query(query)
+	}
+
+	rows, err := db.Query(query, ItemLimit, offset)
+	if err != nil {
+		utils.SetStatus(w, 500)
+		panic(err)
+		return
+	}
+
+	for rows.Next() {
+		result := Item{}
+		err := rows.Scan(&result.ID, &result.Title, &result.Username, &result.CreatedAt)
 		if err != nil {
-			utils.SetStatus(w, 500)
-			//panic("Unable to get the query results.")
 			panic(err)
-			return
 		}
-
-		for rows.Next() {
-			result := Item{}
-			err := rows.Scan(&result.ID, &result.Title, &result.Username, &result.CreatedAt, &result.likes)
-			if err != nil {
-				utils.SetStatus(w, 500)
-				//panic("Unable to scan from the result.")
-				panic(err)
-				return
-			}
-
-			if result.likes.Valid == false {
-				result.likeCount = 0
-			} else {
-				result.likeCount = len(strings.Split(result.likes.String, ","))
-			}
-			//fmt.Printf("likes = %s  item: %#v\n", result.likes.String, result)
-			items.Items = append(items.Items, result)
-		}
-
-		sort.Slice(items.Items, func(i, j int) bool {
-			return items.Items[i].likeCount > items.Items[j].likeCount
-		})
-
-		start := offset
-		end := offset + ItemLimit
-
-		if len(items.Items) > end {
-			items.Items = items.Items[start:end]
-		} else if len(items.Items) > start {
-			items.Items = items.Items[start:len(items.Items)]
-		} else {
-			items.Items = []Item{}
-		}
-
+		items.Items = append(items.Items, result)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -552,8 +510,8 @@ func itemsGet(c web.C, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	query := "SELECT COUNT(*) from items"
-	rows, err := db.Query(query)
+	query = "SELECT COUNT(*) from items_new"
+	rows, err = db.Query(query)
 	if err != nil || rows.Next() == false {
 		utils.SetStatus(w, 500)
 		panic("Unable to get the query results.")
@@ -690,7 +648,7 @@ func itemsPost(c web.C, w http.ResponseWriter, r *http.Request) {
 
 	const layout = "2006-01-02 15:04:05"
 	t := time.Now()
-	query := "INSERT INTO items (user_id, title, body, created_at, updated_at) VALUES ((?), (?), (?), (?), (?));"
+	query := "INSERT INTO items_new (user_id, title, body, created_at, updated_at) VALUES ((?), (?), (?), (?), (?));"
 	_, err = db.Exec(query, userID, title, body, t.Format(layout), t.Format(layout))
 
 	if err != nil {
@@ -703,7 +661,7 @@ func itemsPost(c web.C, w http.ResponseWriter, r *http.Request) {
 	// get new item
 
 	var item DetailedItem
-	query = "SELECT id, user_id, title, body, created_at, updated_at, likes from items WHERE user_id=(?) AND created_at=(?)"
+	query = "SELECT id, user_id, title, body, created_at, updated_at, likes from items_new WHERE user_id=(?) AND created_at=(?)"
 	rows, err := db.Query(query, userID, t.Format(layout))
 	if err != nil || rows.Next() == false {
 		utils.SetStatus(w, 500)
@@ -776,7 +734,7 @@ func itemsDelete(c web.C, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	query := "DELETE FROM items WHERE id=(?)"
+	query := "DELETE FROM items_new WHERE id=(?)"
 	res, err := db.Exec(query, itemID)
 
 	if err != nil {
@@ -891,7 +849,7 @@ func itemsPatch(c web.C, w http.ResponseWriter, r *http.Request) {
 
 	const layout = "2006-01-02 15:04:05"
 	t := time.Now()
-	query := "UPDATE items SET  title=(?), body=(?), updated_at=(?) WHERE id=(?);"
+	query := "UPDATE items_new SET  title=(?), body=(?), updated_at=(?) WHERE id=(?);"
 	_, err = db.Exec(query, item.Title, item.Body, t.Format(layout), itemID)
 
 	if err != nil {
@@ -1072,7 +1030,9 @@ func commentsPost(c web.C, w http.ResponseWriter, r *http.Request) {
 		query := "INSERT into comments(comment_001, id) value  (?, ?)"
 		_, err = db.Exec(query, jsonStr, itemID)
 		if err != nil {
-			panic(err)
+			//panic(err)
+			utils.SetStatus(w, 500)
+			return
 		}
 	} else { //update empty comment_xxx column
 
@@ -1231,7 +1191,7 @@ func likeGet(c web.C, w http.ResponseWriter, r *http.Request) {
 	var like Likes
 	itemID := c.URLParams["item_id"]
 
-	query := "SELECT likes from items WHERE id=(?)"
+	query := "SELECT likes from items_new WHERE id=(?)"
 	rows, err := db.Query(query, itemID)
 	if err != nil {
 		//panic("Unable to get the query results.")
@@ -1310,7 +1270,7 @@ func likePost(c web.C, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	query := "SELECT likes from items WHERE id=(?)"
+	query := "SELECT likes from items_new WHERE id=(?)"
 	rows, err := db.Query(query, itemID)
 	if err != nil {
 		//panic("Unable to get the query results.")
@@ -1358,8 +1318,8 @@ func likePost(c web.C, w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	query = "UPDATE items set likes=(?) WHERE id=(?)"
-	_, err = db.Exec(query, like.Likes, itemID)
+	query = "UPDATE items_new set likes=(?), num_of_likes=(?) WHERE id=(?)"
+	_, err = db.Exec(query, like.Likes, like.LikeCount, itemID)
 
 	if err != nil {
 		utils.SetStatus(w, 500)
@@ -1424,7 +1384,7 @@ func likeDelete(c web.C, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	query := "SELECT likes from items WHERE id=(?)"
+	query := "SELECT likes, num_of_likes from items_new WHERE id=(?)"
 	rows, err := db.Query(query, itemID)
 	if err != nil {
 		//panic("Unable to get the query results.")
@@ -1437,7 +1397,7 @@ func likeDelete(c web.C, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rows.Scan(&like.likes)
+	rows.Scan(&like.likes, &like.LikeCount)
 
 	var result interface{}
 	if like.likes.Valid == false {
@@ -1475,8 +1435,8 @@ func likeDelete(c web.C, w http.ResponseWriter, r *http.Request) {
 		result = like.Likes
 	}
 
-	query = "UPDATE items set likes=(?) WHERE id=(?)"
-	_, err = db.Exec(query, result, itemID)
+	query = "UPDATE items_new set likes=(?), num_of_likes=(?) WHERE id=(?)"
+	_, err = db.Exec(query, result, like.LikeCount-1, itemID)
 
 	if err != nil {
 		utils.SetStatus(w, 500)
@@ -1658,10 +1618,10 @@ func main() {
 	dbname := os.Getenv("MYSQL_DATABASE")
 	dbuser := os.Getenv("MYSQL_USER")
 	dbpass := os.Getenv("MYSQL_PASSWORD")
-	dataSource = fmt.Sprintf("%s:%s@tcp(%s:3306)/%s?parseTime=true&interpolateParams=true", dbuser, dbpass, dbhost, dbname)
+	dataSource := fmt.Sprintf("%s:%s@tcp(%s:3306)/%s?parseTime=true&interpolateParams=true", dbuser, dbpass, dbhost, dbname)
 
 	var err error
-	db, err = sql.Open("mysql", dataSource)
+	db, err = sql.Open(dbDriver, dataSource)
 	if err != nil {
 		//panic("Unable to connect the DB.")
 		panic(err)
