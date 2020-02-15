@@ -483,14 +483,14 @@ func itemsGet(c web.C, w http.ResponseWriter, r *http.Request) {
 	} else {
 
 		//query := "SELECT i.id, i.title, u.username, i.created_at, i.likes from items_new AS i JOIN users AS u ON i.user_id = u.id ORDER BY i.created_at DESC"
-		query = "SELECT i.id, i.title, u.username, i.created_at, i.likes from items_new AS i JOIN users AS u ON i.user_id = u.id ORDER BY i.num_of_likes DESC, i.created_at DESC LIMIT ? OFFSET ?"
+		query = "SELECT i.id, i.title, u.username, i.created_at from items_new AS i JOIN users AS u ON i.user_id = u.id ORDER BY i.num_of_likes DESC, i.created_at DESC LIMIT ? OFFSET ?"
 
 	}
 
 	rows, err := db.Query(query, ItemLimit, offset)
 	if err != nil {
 		utils.SetStatus(w, 500)
-		panic("Unable to get the query results.")
+		panic(err)
 		return
 	}
 
@@ -510,7 +510,7 @@ func itemsGet(c web.C, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	query = "SELECT COUNT(*) from items"
+	query = "SELECT COUNT(*) from items_new"
 	rows, err = db.Query(query)
 	if err != nil || rows.Next() == false {
 		utils.SetStatus(w, 500)
@@ -1030,7 +1030,9 @@ func commentsPost(c web.C, w http.ResponseWriter, r *http.Request) {
 		query := "INSERT into comments(comment_001, id) value  (?, ?)"
 		_, err = db.Exec(query, jsonStr, itemID)
 		if err != nil {
-			panic(err)
+			//panic(err)
+			utils.SetStatus(w, 500)
+			return
 		}
 	} else { //update empty comment_xxx column
 
@@ -1189,7 +1191,7 @@ func likeGet(c web.C, w http.ResponseWriter, r *http.Request) {
 	var like Likes
 	itemID := c.URLParams["item_id"]
 
-	query := "SELECT likes from items WHERE id=(?)"
+	query := "SELECT likes from items_new WHERE id=(?)"
 	rows, err := db.Query(query, itemID)
 	if err != nil {
 		//panic("Unable to get the query results.")
@@ -1268,7 +1270,7 @@ func likePost(c web.C, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	query := "SELECT likes from items WHERE id=(?)"
+	query := "SELECT likes from items_new WHERE id=(?)"
 	rows, err := db.Query(query, itemID)
 	if err != nil {
 		//panic("Unable to get the query results.")
@@ -1316,7 +1318,7 @@ func likePost(c web.C, w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	query = "UPDATE items_new set likes=(?) num_of_likes=(?) WHERE id=(?)"
+	query = "UPDATE items_new set likes=(?), num_of_likes=(?) WHERE id=(?)"
 	_, err = db.Exec(query, like.Likes, like.LikeCount, itemID)
 
 	if err != nil {

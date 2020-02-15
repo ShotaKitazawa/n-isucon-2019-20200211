@@ -47,7 +47,7 @@ func SelectUserByUsername(db *sql.DB, searchname string) (user *User, err error)
 
 	err = rows.Scan(&user.ID, &user.Username, &user.passwordHash, &user.salt, &user.CreatedAt, &user.UpdatedAt)
 	if err != nil {
-		err := &DBUtilError{Msg: "DBSCANERR", Code: DBSCANERR}
+		//err := &DBUtilError{Msg: "DBSCANERR", Code: DBSCANERR}
 		return user, err
 	}
 
@@ -108,7 +108,7 @@ func UsernameExists(username string, db *sql.DB) bool {
 
 // ItemExists returns "true" if the item Exists.
 func ItemExists(itemID string, db *sql.DB) bool {
-	query := "SELECT id FROM items WHERE id=(?)"
+	query := "SELECT id FROM items_new WHERE id=(?)"
 	rows, err := db.Query(query, itemID)
 
 	if err != nil {
@@ -122,7 +122,7 @@ func ItemExists(itemID string, db *sql.DB) bool {
 // SelectItemByID searches the item from items table by the item ID.
 func SelectItemByID(db *sql.DB, itemID string) (item *DetailedItem, err error) {
 	item = new(DetailedItem)
-	query := "SELECT i.id, i.user_id, u.username, i.title, i.body, i.created_at, i.updated_at, i.likes from items AS i JOIN users AS u ON i.user_id = u.id WHERE i.id=(?)"
+	query := "SELECT i.id, i.user_id, u.username, i.title, i.body, i.created_at, i.updated_at, i.likes from items_new AS i JOIN users AS u ON i.user_id = u.id WHERE i.id=(?)"
 
 	rows, err := db.Query(query, itemID)
 	if err != nil {
@@ -187,7 +187,8 @@ func SelectCommentsByID(db *sql.DB, itemID string) (comments *Comments, err erro
 		}
 		user, err := SelectUserByUsername(db, comment.Username)
 		if err != nil {
-			panic("Unexpected err.")
+			//panic(err)
+			return nil, err
 		}
 
 		comment.userID = user.ID
