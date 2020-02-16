@@ -8,7 +8,7 @@ DB_DIR="$ROOT_DIR/db"
 MYSQL_DATABASE=app
 MYSQL_USER=isucon
 MYSQL_PASSWORD=nocusi
-MYSQL_HOST=10.100.1.42
+MYSQL_HOST=localhost
 
 # delete except initial data
 mysql -h $MYSQL_HOST -u$MYSQL_USER -p$MYSQL_PASSWORD $MYSQL_DATABASE -e "DELETE FROM users WHERE id > 10000"

@@ -1614,8 +1614,7 @@ func main() {
 	store = sessions.NewCookieStore(securecookie.GenerateRandomKey(64))
 	users = make(map[string]string)
 
-	//dbhost := os.Getenv("MYSQL_HOST")
-	dbhost := "10.100.1.42"
+	dbhost := os.Getenv("MYSQL_HOST")
 	dbname := os.Getenv("MYSQL_DATABASE")
 	dbuser := os.Getenv("MYSQL_USER")
 	dbpass := os.Getenv("MYSQL_PASSWORD")
